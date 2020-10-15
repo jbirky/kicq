@@ -146,7 +146,10 @@ def LnLike(x, **kwargs):
     # Populate the primary input file (periods negative to make units days in VPLanet)
     primary_in = re.sub("%s(.*?)#" % "dMass", "%s %.6e #" % ("dMass", dMass1), primary_in)
     primary_in = re.sub("%s(.*?)#" % "dRotPeriod", "%s %.6e #" % ("dRotPeriod", -dProt1), primary_in)
-    primary_in = re.sub("%s(.*?)#" % "dTidalTau", "%s %.6e #" % ("dTidalTau", dTau1), primary_in)
+    if kwargs.get('MODEL') == "CPL":
+        primary_in = re.sub("%s(.*?)#" % "dTidalQ", "%s %.6e #" % ("dTidalQ", dTau1), primary_in)
+    else: #otherwise use CTL model
+        primary_in = re.sub("%s(.*?)#" % "dTidalTau", "%s %.6e #" % ("dTidalTau", dTau1), primary_in)
 
     with open(os.path.join(PATH, "output", primaryFile), 'w') as f:
         print(primary_in, file = f)
@@ -154,7 +157,10 @@ def LnLike(x, **kwargs):
     # Populate the secondary input file
     secondary_in = re.sub("%s(.*?)#" % "dMass", "%s %.6e #" % ("dMass", dMass2), secondary_in)
     secondary_in = re.sub("%s(.*?)#" % "dRotPeriod", "%s %.6e #" % ("dRotPeriod", -dProt2), secondary_in)
-    secondary_in = re.sub("%s(.*?)#" % "dTidalTau", "%s %.6e #" % ("dTidalTau", dTau2), secondary_in)
+    if kwargs.get('MODEL') == "CPL":
+        secondary_in = re.sub("%s(.*?)#" % "dTidalQ", "%s %.6e #" % ("dTidalQ", dTau2), secondary_in)
+    else:
+        secondary_in = re.sub("%s(.*?)#" % "dTidalTau", "%s %.6e #" % ("dTidalTau", dTau2), secondary_in)
     secondary_in = re.sub("%s(.*?)#" % "dOrbPeriod", "%s %.6e #" % ("dOrbPeriod", -dPorb), secondary_in)
     secondary_in = re.sub("%s(.*?)#" % "dEcc", "%s %.6e #" % ("dEcc", dEcc), secondary_in)
     with open(os.path.join(PATH, "output", secondaryFile), 'w') as f:
@@ -274,14 +280,21 @@ def GetEvol(x, **kwargs):
     # Populate the primary input file (periods negative to make units days in VPLanet)
     primary_in = re.sub("%s(.*?)#" % "dMass", "%s %.6e #" % ("dMass", dMass1), primary_in)
     primary_in = re.sub("%s(.*?)#" % "dRotPeriod", "%s %.6e #" % ("dRotPeriod", -dProt1), primary_in)
-    primary_in = re.sub("%s(.*?)#" % "dTidalTau", "%s %.6e #" % ("dTidalTau", dTau1), primary_in)
+    if kwargs.get('MODEL') == "CPL":
+        primary_in = re.sub("%s(.*?)#" % "dTidalQ", "%s %.6e #" % ("dTidalQ", dTau1), primary_in)
+    else: #otherwise use CTL model
+        primary_in = re.sub("%s(.*?)#" % "dTidalTau", "%s %.6e #" % ("dTidalTau", dTau1), primary_in)
+        
     with open(os.path.join(PATH, "output", primaryFile), 'w') as f:
         print(primary_in, file = f)
 
     # Populate the secondary input file
     secondary_in = re.sub("%s(.*?)#" % "dMass", "%s %.6e #" % ("dMass", dMass2), secondary_in)
     secondary_in = re.sub("%s(.*?)#" % "dRotPeriod", "%s %.6e #" % ("dRotPeriod", -dProt2), secondary_in)
-    secondary_in = re.sub("%s(.*?)#" % "dTidalTau", "%s %.6e #" % ("dTidalTau", dTau2), secondary_in)
+    if kwargs.get('MODEL') == "CPL":
+        secondary_in = re.sub("%s(.*?)#" % "dTidalQ", "%s %.6e #" % ("dTidalQ", dTau2), secondary_in)
+    else:
+        secondary_in = re.sub("%s(.*?)#" % "dTidalTau", "%s %.6e #" % ("dTidalTau", dTau2), secondary_in)
     secondary_in = re.sub("%s(.*?)#" % "dOrbPeriod", "%s %.6e #" % ("dOrbPeriod", -dPorb), secondary_in)
     secondary_in = re.sub("%s(.*?)#" % "dEcc", "%s %.6e #" % ("dEcc", dEcc), secondary_in)
     with open(os.path.join(PATH, "output", secondaryFile), 'w') as f:
