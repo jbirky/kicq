@@ -19,7 +19,10 @@ import time
 
 # os.nice(10)
 
-# Define algorithm parameters
+# ===============================================
+# approxposterior settings
+# ===============================================
+
 ndim = 9                          # Dimensionality of the problem
 m0 = 5                         # Initial size of training set
 m = 500                           # Number of new points to find each iteration
@@ -28,29 +31,33 @@ kmax = 5                          # Number of consecutive iterations for converg
 nGPRestarts = 1                   # Number of times to restart GP hyperparameter optimization
 nMinObjRestarts = 5               # Number of times to restart objective fn minimization
 optGPEveryN = 10                  # Optimize GP hyperparameters even this many iterations
-
-bounds = config.bounds
 algorithm = "bape"               # Use the Kandasamy et al. (2015) formalism
-trainSimCache = "apRunAPFModelCache.npz"
 
-# for MCMC parallelization
-ncpu = os.cpu_count()
-pool = Pool()
 
 # emcee.EnsembleSampler parameters
 samplerKwargs = {"nwalkers" : 90,
-                 "pool" : pool}
+                 "pool" : Pool()}
 
 # emcee.EnsembleSampler.run_mcmc parameters
 mcmcKwargs = {"iterations" : int(2.0e4), 
               "progress" : True}
 
-# Loglikelihood function setup
-kwargs = config.kwargs            # All the Rup 147 system constraints
+
+# ===============================================
+# Load config parameters
+# ===============================================
+
+kwargs = config.kwargs              # All the Rup 147 system constraints
+bounds = config.bounds              # Prior bounds
+
 PATH = os.path.dirname(os.path.abspath(__file__))
 kwargs["PATH"] = PATH
 
-# Get the input files, save them as strings
+
+# ===============================================
+# Load vplanet input files, save them as strings
+# ===============================================
+
 with open(os.path.join(PATH, "primary.in"), 'r') as f:
     primary_in = f.read()
     kwargs["PRIMARYIN"] = primary_in
@@ -61,9 +68,12 @@ with open(os.path.join(PATH, "vpl.in"), 'r') as f:
     vpl_in = f.read()
     kwargs["VPLIN"] = vpl_in
 
-# =====================
+
+# ===============================================
 # Generate initial GP training samples
-# =====================
+# ===============================================
+
+trainSimCache = "apRunAPFModelCache.npz"
 
 if not os.path.exists(trainSimCache):
     y = np.zeros(m0)
@@ -71,8 +81,6 @@ if not os.path.exists(trainSimCache):
 
     t0 = time.time()
     for ii in tqdm.tqdm(range(m0)):
-        # theta[ii,:] = rup147.samplePriorRUP147()
-        # y[ii] = rup147.LnProbRUP147(theta[ii], **kwargs)
         theta[ii,:] = kwargs["PriorSample"]()
         y[ii] = config.LnProb(theta[ii], **kwargs)
 
@@ -87,16 +95,16 @@ else:
 
 print(theta.shape)
 
-# =====================
+
+# ===============================================
 # Initialize GP
-# =====================
+# ===============================================
 
 # Guess initial metric, or scale length of the covariances in loglikelihood space
 initialMetric = np.nanmedian(theta**2, axis=0)/10.0
 
 # Create kernel: We'll model coverianges in loglikelihood space using a
 # Squared Expoential Kernel as we anticipate Gaussian-ish posterior
-# distributions in our 2-dimensional parameter space
 kernel = george.kernels.ExpSquaredKernel(initialMetric, ndim=ndim)
 
 # Guess initial mean function
@@ -106,9 +114,10 @@ mean = np.nanmedian(y)
 gp = george.GP(kernel=kernel, fit_mean=True, mean=mean)
 gp.compute(theta)
 
-# =====================
+
+# ===============================================
 # Run approxposterior
-# =====================
+# ===============================================
 
 # Initialize object using the Wang & Li (2017) Rosenbrock function example
 ap = approx.ApproxPosterior(theta=theta,
@@ -125,9 +134,9 @@ ap.run(m=m, nmax=nmax, kmax=kmax, mcmcKwargs=mcmcKwargs, samplerKwargs=samplerKw
        thinChains=True, estBurnin=True, verbose=True, cache=True, convergenceCheck=True, **kwargs)
 
 
-# =====================
+# ===============================================
 # Plot posterior
-# =====================
+# ===============================================
 
 # Load in chain from last iteration
 reader = emcee.backends.HDFBackend(ap.backends[-1], read_only=True)
