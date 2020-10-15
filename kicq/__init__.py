@@ -17,5 +17,4 @@ from .mcmcUtils import *
 from .pool import *
 from .priors import *
 from .rup147 import *
-from .ad3814 import *
 from .utils import *

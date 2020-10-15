@@ -6,7 +6,7 @@ Data and priors for Rup 147 stellar binary with data from Torres et al. (2018)
 
 import numpy as np
 from scipy.stats import norm
-from . import utils, LnLike
+from . import LnLike
 
 
 __all__ = ["LnPrior", "samplePrior"]
