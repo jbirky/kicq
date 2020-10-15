@@ -15,6 +15,7 @@ __copyright__ = "Copyright 2019 David P. Fleming"
 
 from .mcmcUtils import *
 from .pool import *
+from .priors import *
 from .rup147 import *
 from .ad3814 import *
 from .utils import *
