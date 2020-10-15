@@ -3,10 +3,11 @@ from kicq import priors
 from kicq.mcmcUtils import LnLike
 
 
-# =====================
-# Observational constraints from Torres et al. (2018)
-# RUP 147
-# =====================
+model = "CPL"
+
+# =========================================
+# RUP 147 constraints from Torres et al. (2018)
+# =========================================
 
 # Stellar properties
 m1 = 1.0782
@@ -52,9 +53,9 @@ eccSig = 0.0005
 age = 2.48
 ageSig = 0.43
 
-# =====================
+# =========================================
 # Set up priors
-# =====================
+# =========================================
 
 m1Bounds    = (0.9, 1.1)
 m2Bounds    = (0.9, 1.1)
@@ -79,8 +80,9 @@ def LnPriorObject(x, **kwargs):
     return lnp
 
 
-def samplePriorObject(**kwargs):
-    slnp = priors.samplePrior(bounds=bounds, 
+def samplePriorObject(size=1, **kwargs):
+    slnp = priors.samplePrior(size=size,
+                              bounds=bounds, 
                               m1Obs=m1,
                               m1ObsSig=m1Sig,
                               m2Obs=m2,
@@ -96,9 +98,9 @@ def LnProb(theta, **kwargs):
     return lnP
 
 
-# =====================
+# =========================================
 # Dict to hold all constraints
-# =====================
+# =========================================
 
 kwargs = {"PATH" : ".",
           "R1" : r1,
@@ -117,4 +119,4 @@ kwargs = {"PATH" : ".",
           "ECCSIG" : eccSig,
           "LnPrior" : LnPriorObject,
           "PriorSample" : samplePriorObject, 
-          "MODEL" : "CPL"}
+          "MODEL" : model}
