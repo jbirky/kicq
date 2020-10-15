@@ -47,8 +47,12 @@ def LnLike(x, **kwargs):
     dMass1, dMass2, dProt1, dProt2, dTau1, dTau2, dPorb, dEcc, dAge = x
 
     # Unlog tau, convect to yr
-    dTau1 = (10 ** dTau1) / utils.YEARSEC
-    dTau2 = (10 ** dTau2) / utils.YEARSEC
+    if kwargs['MODEL'] == 'CTL':    
+        dTau1 = (10 ** dTau1) / utils.YEARSEC
+        dTau2 = (10 ** dTau2) / utils.YEARSEC
+    else:
+        dTau1 = (10 ** dTau1) 
+        dTau2 = (10 ** dTau2) 
 
     # Convert from Gyr to yr then set stop time, output time to age of system
     dStopTime = dAge * 1.0e9
@@ -243,8 +247,12 @@ def GetEvol(x, **kwargs):
     dMass1, dMass2, dProt1, dProt2, dTau1, dTau2, dPorb, dEcc, dAge = x
 
     # Unlog tau, convect to yr
-    dTau1 = (10 ** dTau1) / utils.YEARSEC
-    dTau2 = (10 ** dTau2) / utils.YEARSEC
+    if kwargs['MODEL'] == 'CTL':    
+        dTau1 = (10 ** dTau1) / utils.YEARSEC
+        dTau2 = (10 ** dTau2) / utils.YEARSEC
+    else:
+        dTau1 = (10 ** dTau1) 
+        dTau2 = (10 ** dTau2) 
 
     # Convert age to yr from Gyr, set stop time, output time to age of system
     dStopTime = dAge * 1.0e9
@@ -284,7 +292,7 @@ def GetEvol(x, **kwargs):
         primary_in = re.sub("%s(.*?)#" % "dTidalQ", "%s %.6e #" % ("dTidalQ", dTau1), primary_in)
     else: #otherwise use CTL model
         primary_in = re.sub("%s(.*?)#" % "dTidalTau", "%s %.6e #" % ("dTidalTau", dTau1), primary_in)
-        
+
     with open(os.path.join(PATH, "output", primaryFile), 'w') as f:
         print(primary_in, file = f)
 
