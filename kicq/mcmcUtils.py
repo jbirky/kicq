@@ -56,7 +56,7 @@ def LnLike(x, **kwargs):
 
     # Convert from Gyr to yr then set stop time, output time to age of system
     dStopTime = dAge * 1.0e9
-    dOutputTime = dStopTime
+    dOutputTime = kwargs.get('dOutputTime', dStopTime)
 
     # Get the prior probability
     lnprior = kwargs["LnPrior"](x, **kwargs)
@@ -129,12 +129,17 @@ def LnLike(x, **kwargs):
         print("ERROR: Must supply PRIMARYIN, SECONDARYIN, VPLIN.")
         raise
 
-    # Get PATH
+    # Get input PATH
     try:
         PATH = kwargs.get("PATH")
     except KeyError as err:
         print("ERROR: Must supply PATH.")
         raise
+
+    # Get output path
+    OUTPATH = kwargs.get('OUTPATH', PATH + "/output")
+    if not os.path.exists(OUTPATH):
+        os.mkdir(OUTPATH)
 
     # Randomize file names
     sysName = 'vpl%012x' % random.randrange(16**12)
@@ -155,7 +160,7 @@ def LnLike(x, **kwargs):
     else: #otherwise use CTL model
         primary_in = re.sub("%s(.*?)#" % "dTidalTau", "%s %.6e #" % ("dTidalTau", dTau1), primary_in)
 
-    with open(os.path.join(PATH, "output", primaryFile), 'w') as f:
+    with open(os.path.join(OUTPATH, primaryFile), 'w') as f:
         print(primary_in, file = f)
 
     # Populate the secondary input file
@@ -167,7 +172,7 @@ def LnLike(x, **kwargs):
         secondary_in = re.sub("%s(.*?)#" % "dTidalTau", "%s %.6e #" % ("dTidalTau", dTau2), secondary_in)
     secondary_in = re.sub("%s(.*?)#" % "dOrbPeriod", "%s %.6e #" % ("dOrbPeriod", -dPorb), secondary_in)
     secondary_in = re.sub("%s(.*?)#" % "dEcc", "%s %.6e #" % ("dEcc", dEcc), secondary_in)
-    with open(os.path.join(PATH, "output", secondaryFile), 'w') as f:
+    with open(os.path.join(OUTPATH, secondaryFile), 'w') as f:
         print(secondary_in, file = f)
 
     # Populate the system input file
@@ -175,20 +180,21 @@ def LnLike(x, **kwargs):
     vpl_in = re.sub('%s(.*?)#' % "dOutputTime", '%s %.6e #' % ("dOutputTime", dOutputTime), vpl_in)
     vpl_in = re.sub('sSystemName(.*?)#', 'sSystemName %s #' % sysName, vpl_in)
     vpl_in = re.sub('saBodyFiles(.*?)#', 'saBodyFiles %s %s #' % (primaryFile, secondaryFile), vpl_in)
-    with open(os.path.join(PATH, "output", sysFile), 'w') as f:
+    with open(os.path.join(OUTPATH, sysFile), 'w') as f:
         print(vpl_in, file = f)
 
     # Run VPLANET and get the output, then delete the output files
-    subprocess.call(["vplanet", sysFile], cwd = os.path.join(PATH, "output"))
-    output = vpl.GetOutput(os.path.join(PATH, "output"), logfile = logfile)
+    subprocess.call(["vplanet", sysFile], cwd = os.path.join(OUTPATH))
+    output = vpl.GetOutput(os.path.join(OUTPATH), logfile = logfile)
 
     try:
-        os.remove(os.path.join(PATH, "output", primaryFile))
-        os.remove(os.path.join(PATH, "output", secondaryFile))
-        os.remove(os.path.join(PATH, "output", sysFile))
-        os.remove(os.path.join(PATH, "output", primaryFwFile))
-        os.remove(os.path.join(PATH, "output", secondaryFwFile))
-        os.remove(os.path.join(PATH, "output", logfile))
+        if kwargs.get('remove', True) == True:
+            os.remove(os.path.join(OUTPATH, primaryFile))
+            os.remove(os.path.join(OUTPATH, secondaryFile))
+            os.remove(os.path.join(OUTPATH, sysFile))
+            os.remove(os.path.join(OUTPATH, primaryFwFile))
+            os.remove(os.path.join(OUTPATH, secondaryFwFile))
+            os.remove(os.path.join(OUTPATH, logfile))
     except FileNotFoundError:
         # Run failed!
         return -np.inf, np.nan, np.nan, np.nan, np.nan, np.nan, np.nan, np.nan, np.nan, np.nan, np.nan
@@ -244,7 +250,7 @@ def GetEvol(x, **kwargs):
     """
 
     # Get the current vector
-    dMass1, dMass2, dProt1, dProt2, dTau1, dTau2, dPorb, dEcc, dAge = x
+    dMass1, dMass2, dProt1, dProt2, dTau1, dTau2, dPorb, dEcc, dAge = x    
 
     # Unlog tau, convect to yr
     if kwargs['MODEL'] == 'CTL':    
@@ -256,7 +262,7 @@ def GetEvol(x, **kwargs):
 
     # Convert age to yr from Gyr, set stop time, output time to age of system
     dStopTime = dAge * 1.0e9
-    dOutputTime = dStopTime
+    dOutputTime = kwargs.get('dOutputTime', dStopTime)
 
     # Get the prior probability
     lnprior = kwargs["LnPrior"](x, **kwargs)
@@ -273,6 +279,10 @@ def GetEvol(x, **kwargs):
     except KeyError as err:
         print("ERROR: must supply PRIMARYIN, SECONDARYIN, VPLIN.")
         raise
+
+    OUTPATH = kwargs.get('OUTPATH', PATH + "/output")
+    if not os.path.exists(OUTPATH):
+        os.mkdir(OUTPATH)
 
     # Randomize file names
     sysName = 'vpl%012x' % random.randrange(16**12)
@@ -293,7 +303,7 @@ def GetEvol(x, **kwargs):
     else: #otherwise use CTL model
         primary_in = re.sub("%s(.*?)#" % "dTidalTau", "%s %.6e #" % ("dTidalTau", dTau1), primary_in)
 
-    with open(os.path.join(PATH, "output", primaryFile), 'w') as f:
+    with open(os.path.join(OUTPATH, primaryFile), 'w') as f:
         print(primary_in, file = f)
 
     # Populate the secondary input file
@@ -305,7 +315,7 @@ def GetEvol(x, **kwargs):
         secondary_in = re.sub("%s(.*?)#" % "dTidalTau", "%s %.6e #" % ("dTidalTau", dTau2), secondary_in)
     secondary_in = re.sub("%s(.*?)#" % "dOrbPeriod", "%s %.6e #" % ("dOrbPeriod", -dPorb), secondary_in)
     secondary_in = re.sub("%s(.*?)#" % "dEcc", "%s %.6e #" % ("dEcc", dEcc), secondary_in)
-    with open(os.path.join(PATH, "output", secondaryFile), 'w') as f:
+    with open(os.path.join(OUTPATH, secondaryFile), 'w') as f:
         print(secondary_in, file = f)
 
     # Populate the system input file
@@ -313,20 +323,21 @@ def GetEvol(x, **kwargs):
     vpl_in = re.sub('%s(.*?)#' % "dOutputTime", '%s %.6e #' % ("dOutputTime", dOutputTime), vpl_in)
     vpl_in = re.sub('sSystemName(.*?)#', 'sSystemName %s #' % sysName, vpl_in)
     vpl_in = re.sub('saBodyFiles(.*?)#', 'saBodyFiles %s %s #' % (primaryFile, secondaryFile), vpl_in)
-    with open(os.path.join(PATH, "output", sysFile), 'w') as f:
+    with open(os.path.join(OUTPATH, sysFile), 'w') as f:
         print(vpl_in, file = f)
 
     # Run VPLANET and get the output, then delete the output files
-    subprocess.call(["vplanet", sysFile], cwd = os.path.join(PATH, "output"))
-    output = vpl.GetOutput(os.path.join(PATH, "output"), logfile = logfile)
+    subprocess.call(["vplanet", sysFile], cwd = os.path.join(OUTPATH))
+    output = vpl.GetOutput(os.path.join(OUTPATH), logfile = logfile)
 
     try:
-        os.remove(os.path.join(PATH, "output", primaryFile))
-        os.remove(os.path.join(PATH, "output", secondaryFile))
-        os.remove(os.path.join(PATH, "output", sysFile))
-        os.remove(os.path.join(PATH, "output", primaryFwFile))
-        os.remove(os.path.join(PATH, "output", secondaryFwFile))
-        os.remove(os.path.join(PATH, "output", logfile))
+        if kwargs.get('remove', True) == True:
+            os.remove(os.path.join(OUTPATH, primaryFile))
+            os.remove(os.path.join(OUTPATH, secondaryFile))
+            os.remove(os.path.join(OUTPATH, sysFile))
+            os.remove(os.path.join(OUTPATH, primaryFwFile))
+            os.remove(os.path.join(OUTPATH, secondaryFwFile))
+            os.remove(os.path.join(OUTPATH, logfile))
     except FileNotFoundError:
         # Run failed!
         return None
