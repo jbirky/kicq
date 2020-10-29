@@ -24,7 +24,7 @@ import time
 # ===============================================
 
 ndim = 9                          # Dimensionality of the problem
-m0 = 1000                         # Initial size of training set
+m0 = 2000                         # Initial size of training set
 m = 200                           # Number of new points to find each iteration
 nmax = 20                         # Maximum number of iterations
 kmax = 5                          # Number of consecutive iterations for convergence check to pass before successfully ending algorithm
@@ -81,8 +81,12 @@ if not os.path.exists(trainSimCache):
 
     t0 = time.time()
     for ii in tqdm.tqdm(range(m0)):
-        theta[ii,:] = kwargs["PriorSample"]()
-        y[ii] = config.LnProb(theta[ii], printOut=True, **kwargs)
+        lnP = -np.inf
+        while not np.isfinite(lnP):
+            tt = kwargs["PriorSample"]()
+            lnP = config.LnProb(tt, **kwargs)
+        theta[ii,:] = tt
+        y[ii] = lnP
 
     np.savez(trainSimCache, theta=theta, y=y)
     print('Finished running {} vplanet sims:  {}'.format(m0, time.time() - t0))
@@ -96,46 +100,46 @@ else:
 print(theta.shape)
 
 
-# ===============================================
-# Initialize GP
-# ===============================================
+# # ===============================================
+# # Initialize GP
+# # ===============================================
 
-# Use ExpSquared kernel, the approxposterior default option
-gp = approx.gpUtils.defaultGP(theta, y, white_noise=-15, fitAmp=False)
-
-
-# ===============================================
-# Run approxposterior
-# ===============================================
-
-# Initialize object using the Wang & Li (2017) Rosenbrock function example
-ap = approx.ApproxPosterior(theta=theta,
-                            y=y,
-                            gp=gp,
-                            lnprior=kwargs["LnPrior"],
-                            lnlike=kicmc.LnLike,
-                            priorSample=kwargs["PriorSample"],
-                            algorithm=algorithm,
-                            bounds=bounds)
-
-ap.run(m=m, nmax=nmax, kmax=kmax, mcmcKwargs=mcmcKwargs, samplerKwargs=samplerKwargs, 
-       nGPRestarts=nGPRestarts, nMinObjRestarts=nMinObjRestarts, optGPEveryN=optGPEveryN, eps=0.1,
-       thinChains=True, estBurnin=True, verbose=True, cache=True, convergenceCheck=True, **kwargs)
+# # Use ExpSquared kernel, the approxposterior default option
+# gp = approx.gpUtils.defaultGP(theta, y, white_noise=-15, fitAmp=False)
 
 
-# ===============================================
-# Plot posterior
-# ===============================================
+# # ===============================================
+# # Run approxposterior
+# # ===============================================
 
-# Load in chain from last iteration
-reader = emcee.backends.HDFBackend(ap.backends[-1], read_only=True)
-samples = reader.get_chain(discard=ap.iburns[-1], flat=True, thin=ap.ithins[-1])
+# # Initialize object using the Wang & Li (2017) Rosenbrock function example
+# ap = approx.ApproxPosterior(theta=theta,
+#                             y=y,
+#                             gp=gp,
+#                             lnprior=kwargs["LnPrior"],
+#                             lnlike=kicmc.LnLike,
+#                             priorSample=kwargs["PriorSample"],
+#                             algorithm=algorithm,
+#                             bounds=bounds)
 
-# Corner plot!
-fig = corner.corner(samples, quantiles=[0.16, 0.5, 0.84], show_titles=True,
-                    labels=[r'$M_1$', r'$M_2$', r'$Prot_1$', r'$Prot_2$', r'$\tau_1$', r'$\tau_2$', r'$P_{orb}$', r'$e$', r'$age$'],
-                    scale_hist=True, plot_contours=True)
+# ap.run(m=m, nmax=nmax, kmax=kmax, mcmcKwargs=mcmcKwargs, samplerKwargs=samplerKwargs, 
+#        nGPRestarts=nGPRestarts, nMinObjRestarts=nMinObjRestarts, optGPEveryN=optGPEveryN, eps=0.1,
+#        thinChains=True, estBurnin=True, verbose=True, cache=True, convergenceCheck=True, **kwargs)
 
-fig.savefig("apFinalPosterior.png", bbox_inches="tight") # Uncomment to save
 
-np.save('ap_final_samples.npy', samples)
+# # ===============================================
+# # Plot posterior
+# # ===============================================
+
+# # Load in chain from last iteration
+# reader = emcee.backends.HDFBackend(ap.backends[-1], read_only=True)
+# samples = reader.get_chain(discard=ap.iburns[-1], flat=True, thin=ap.ithins[-1])
+
+# # Corner plot!
+# fig = corner.corner(samples, quantiles=[0.16, 0.5, 0.84], show_titles=True,
+#                     labels=[r'$M_1$', r'$M_2$', r'$Prot_1$', r'$Prot_2$', r'$\tau_1$', r'$\tau_2$', r'$P_{orb}$', r'$e$', r'$age$'],
+#                     scale_hist=True, plot_contours=True)
+
+# fig.savefig("apFinalPosterior.png", bbox_inches="tight") # Uncomment to save
+
+# np.save('ap_final_samples.npy', samples)

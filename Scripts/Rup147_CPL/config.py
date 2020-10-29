@@ -91,11 +91,8 @@ def samplePriorObject(size=1, **kwargs):
 
 
 def LnProb(theta, **kwargs):
-    lnP = -np.inf
-    while not np.isfinite(lnP):
-        lnP = LnLike(theta, **kwargs)[0] + LnPriorObject(theta, **kwargs)
 
-    return lnP
+    return LnLike(theta, **kwargs)[0] + LnPriorObject(theta, **kwargs)
 
 
 # =========================================

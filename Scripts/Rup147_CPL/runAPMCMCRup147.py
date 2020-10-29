@@ -24,14 +24,14 @@ import time
 # ===============================================
 
 ndim = 9                          # Dimensionality of the problem
-m0 = 5                         # Initial size of training set
+m0 = 1000                         # Initial size of training set
 m = 500                           # Number of new points to find each iteration
 nmax = 20                         # Maximum number of iterations
 kmax = 5                          # Number of consecutive iterations for convergence check to pass before successfully ending algorithm
 nGPRestarts = 1                   # Number of times to restart GP hyperparameter optimization
 nMinObjRestarts = 5               # Number of times to restart objective fn minimization
 optGPEveryN = 10                  # Optimize GP hyperparameters even this many iterations
-algorithm = "bape"               # Use the Kandasamy et al. (2015) formalism
+algorithm = "bape"                # Use the Kandasamy et al. (2015) formalism
 
 
 # emcee.EnsembleSampler parameters
@@ -81,8 +81,12 @@ if not os.path.exists(trainSimCache):
 
     t0 = time.time()
     for ii in tqdm.tqdm(range(m0)):
-        theta[ii,:] = kwargs["PriorSample"]()
-        y[ii] = config.LnProb(theta[ii], **kwargs)
+        lnP = -np.inf
+        while not np.isfinite(lnP):
+            tt = kwargs["PriorSample"]()
+            lnP = config.LnProb(tt, **kwargs)
+        theta[ii,:] = tt
+        y[ii] = lnP
 
     np.savez(trainSimCache, theta=theta, y=y)
     print('Finished running {} vplanet sims:  {}'.format(m0, time.time() - t0))
