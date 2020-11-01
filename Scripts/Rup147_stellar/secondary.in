@@ -1,0 +1,14 @@
+# The host star, the sun -> Primary body!
+sName		secondary	# Body's name
+saModules       stellar  # Modules
+
+# Physical Parameters
+iBodyType     1                 # Star!
+dMass         1.0661            # Mass, solar masses
+# dRotPeriod    -0.2              # Initial rotation period in d
+
+# Stellar param
+sStellarModel baraffe           # Stellar evolution grid
+# sMagBrakingModel matt           # Matt+2015 magnetic braking model
+
+saOutputOrder	Time -Radius Temperature -Luminosity -RotPer 
