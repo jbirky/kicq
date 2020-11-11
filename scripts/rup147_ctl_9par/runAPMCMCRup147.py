@@ -24,8 +24,8 @@ import time
 # ===============================================
 
 ndim = 9                          # Dimensionality of the problem
-m0 = 1000                         # Initial size of training set
-m = 500                           # Number of new points to find each iteration
+m0 = 2000                         # Initial size of training set
+m = 200                           # Number of new points to find each iteration
 nmax = 20                         # Maximum number of iterations
 kmax = 5                          # Number of consecutive iterations for convergence check to pass before successfully ending algorithm
 nGPRestarts = 1                   # Number of times to restart GP hyperparameter optimization
@@ -39,7 +39,7 @@ samplerKwargs = {"nwalkers" : 90,
                  "pool" : Pool()}
 
 # emcee.EnsembleSampler.run_mcmc parameters
-mcmcKwargs = {"iterations" : int(2.0e4), 
+mcmcKwargs = {"iterations" : int(1.0e4), 
               "progress" : True}
 
 
@@ -73,7 +73,7 @@ with open(os.path.join(PATH, "vpl.in"), 'r') as f:
 # Generate initial GP training samples
 # ===============================================
 
-trainSimCache = "apRunAPFModelCache.npz"
+trainSimCache = "apRunAPFModelCache1.npz"
 
 if not os.path.exists(trainSimCache):
     y = np.zeros(m0)
@@ -94,63 +94,52 @@ if not os.path.exists(trainSimCache):
 else:
     print("Loading in cached simulations...")
     sims = np.load(trainSimCache)
-    theta = sims["theta"]
-    y = sims["y"]
+    theta = sims["theta"][0:m0]
+    y = sims["y"][0:m0]
 
 print(theta.shape)
 
 
-# ===============================================
-# Initialize GP
-# ===============================================
+# # ===============================================
+# # Initialize GP
+# # ===============================================
 
-# Guess initial metric, or scale length of the covariances in loglikelihood space
-initialMetric = np.nanmedian(theta**2, axis=0)/10.0
-
-# Create kernel: We'll model coverianges in loglikelihood space using a
-# Squared Expoential Kernel as we anticipate Gaussian-ish posterior
-kernel = george.kernels.ExpSquaredKernel(initialMetric, ndim=ndim)
-
-# Guess initial mean function
-mean = np.nanmedian(y)
-
-# Create GP and compute the kernel
-gp = george.GP(kernel=kernel, fit_mean=True, mean=mean)
-gp.compute(theta)
+# # Use ExpSquared kernel, the approxposterior default option
+# gp = approx.gpUtils.defaultGP(theta, y, white_noise=-15, fitAmp=False)
 
 
-# ===============================================
-# Run approxposterior
-# ===============================================
+# # ===============================================
+# # Run approxposterior
+# # ===============================================
 
-# Initialize object using the Wang & Li (2017) Rosenbrock function example
-ap = approx.ApproxPosterior(theta=theta,
-                            y=y,
-                            gp=gp,
-                            lnprior=kwargs["LnPrior"],
-                            lnlike=kicmc.LnLike,
-                            priorSample=kwargs["PriorSample"],
-                            algorithm=algorithm,
-                            bounds=bounds)
+# # Initialize object using the Wang & Li (2017) Rosenbrock function example
+# ap = approx.ApproxPosterior(theta=theta,
+#                             y=y,
+#                             gp=gp,
+#                             lnprior=kwargs["LnPrior"],
+#                             lnlike=kicmc.LnLike,
+#                             priorSample=kwargs["PriorSample"],
+#                             algorithm=algorithm,
+#                             bounds=bounds)
 
-ap.run(m=m, nmax=nmax, kmax=kmax, mcmcKwargs=mcmcKwargs, samplerKwargs=samplerKwargs, 
-       nGPRestarts=nGPRestarts, nMinObjRestarts=nMinObjRestarts, optGPEveryN=optGPEveryN, eps=0.1,
-       thinChains=True, estBurnin=True, verbose=True, cache=True, convergenceCheck=True, **kwargs)
+# ap.run(m=m, nmax=nmax, kmax=kmax, mcmcKwargs=mcmcKwargs, samplerKwargs=samplerKwargs, 
+#        nGPRestarts=nGPRestarts, nMinObjRestarts=nMinObjRestarts, optGPEveryN=optGPEveryN, eps=0.1,
+#        thinChains=True, estBurnin=True, verbose=True, cache=True, convergenceCheck=True, **kwargs)
 
 
-# ===============================================
-# Plot posterior
-# ===============================================
+# # ===============================================
+# # Plot posterior
+# # ===============================================
 
-# Load in chain from last iteration
-reader = emcee.backends.HDFBackend(ap.backends[-1], read_only=True)
-samples = reader.get_chain(discard=ap.iburns[-1], flat=True, thin=ap.ithins[-1])
+# # Load in chain from last iteration
+# reader = emcee.backends.HDFBackend(ap.backends[-1], read_only=True)
+# samples = reader.get_chain(discard=ap.iburns[-1], flat=True, thin=ap.ithins[-1])
 
-# Corner plot!
-fig = corner.corner(samples, quantiles=[0.16, 0.5, 0.84], show_titles=True,
-                    labels=[r'$M_1$', r'$M_2$', r'$Prot_1$', r'$Prot_2$', r'$\tau_1$', r'$\tau_2$', r'$P_{orb}$', r'$e$', r'$age$'],
-                    scale_hist=True, plot_contours=True)
+# # Corner plot!
+# fig = corner.corner(samples, quantiles=[0.16, 0.5, 0.84], show_titles=True,
+#                     labels=[r'$M_1$', r'$M_2$', r'$Prot_1$', r'$Prot_2$', r'$\tau_1$', r'$\tau_2$', r'$P_{orb}$', r'$e$', r'$age$'],
+#                     scale_hist=True, plot_contours=True)
 
-fig.savefig("apFinalPosterior.png", bbox_inches="tight") # Uncomment to save
+# fig.savefig("apFinalPosterior.png", bbox_inches="tight") # Uncomment to save
 
-np.save('ap_final_samples.npy', samples)
+# np.save('ap_final_samples.npy', samples)
