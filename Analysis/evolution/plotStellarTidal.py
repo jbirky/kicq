@@ -19,11 +19,12 @@ rc('ytick', labelsize=20)
 # Load sim files
 # ===================================================
 
+# Use infiles from the following INPATH
 INPATH = '../../Scripts/Rup147_CTL'
 # INPATH = '../../Scripts/Rup147_CPL'
 OUTPATH = 'sims'
 
-plotName = 'evolution_ctl.png'
+plotName = 'plots/evolution_ctl.png'
 sysName = 'Rup147'
 
 import sys
@@ -63,27 +64,7 @@ with open(os.path.join(INPATH, "vpl.in"), 'r') as f:
 # Run simulation
 # ===================================================
 
-# mle
-theta = np.array([ 1.07753052,  1.06771651,  4.37292767,  7.77321418, -1.46275137,
-        0.98559053,  6.5468505 ,  0.15460172,  2.16161671])
-
-# theta = np.array([ 1.08,  1.07,  6.2,  6.2, -0.5, -0.5,  6.8,  0.2,  2.45])
-
-theta = np.array([ 1.07753052,  1.06771651,  7.7,  7.77321418, -1,
-        -0.98559053,  6.5468505 ,  0.15460172,  2.16161671])
-
-# peak
-# theta = [1.0768364142412223,
-# 		 1.0660648780006898,
-# 		 6.173980935724222,
-# 		 7.108016357938551,
-# 		 0.4648496167528213,
-# 		 -0.4638790248463207,
-# 		 7.160446192432624,
-# 		 0.2863339037662828,
-# 		 2.0136783756544827]
-
-# theta = [1.08, 1.07, 6.0, 6.0, 6., 6., 7.4, .2, 2.45]
+theta = np.array([ 1.08,  1.07,  6.2,  6.2, -0.5, -0.5,  6.8,  0.2,  2.45])
 
 kwargs['remove'] = False
 kwargs['dOutputTime'] = 1e6
@@ -209,7 +190,7 @@ plt.gcf().text(.82, .6, output, fontsize=22, va='top')
 axs[2][0].set_xlabel('Time [yr]', fontsize=20)
 axs[2][1].set_xlabel('Time [yr]', fontsize=20)
 axs[0][0].legend(loc='upper left')
-plt.suptitle(f"{sysName} {kwargs['MODEL']} Model", fontsize=25)
+plt.suptitle("{} {} Model".format(sysName, kwargs['MODEL']), fontsize=25)
 plt.xscale('log')
 plt.xlim(1e6, max(sec.T[0]))
 plt.minorticks_on()

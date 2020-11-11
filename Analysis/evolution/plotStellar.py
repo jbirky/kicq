@@ -32,6 +32,8 @@ sysName = 'Rup 147'
 # Load sim files
 # ===================================================
 
+# Must run vplanet sims in stellar/vpl.in first!
+
 PATH = os.path.dirname(os.path.abspath(__file__))
 OUTPATH = 'stellar'
 
