@@ -15,7 +15,7 @@ import argparse
 from . import utils
 
 
-__all__ = ["FunctionWrapper", "LnLike", "GetEvol", "RunMCMC"]
+__all__ = ["FunctionWrapper", "LnLike", "RunMCMC"]
 
 class FunctionWrapper(object):
     """"
@@ -44,19 +44,19 @@ def LnLike(x, **kwargs):
     """
 
     # Get the current vector
-    dMass1, dMass2, dProt1, dProt2, dTau1, dTau2, dPorb, dEcc, dAge = x
+    dProt1, dProt2, dPorb, dEcc = x
 
     # Unlog tau, convect to yr
-    if kwargs['MODEL'] == 'CTL':    
-        dTau1 = (10 ** dTau1) / utils.YEARSEC
-        dTau2 = (10 ** dTau2) / utils.YEARSEC
-    else:
-        dTau1 = (10 ** dTau1) 
-        dTau2 = (10 ** dTau2) 
+#     if kwargs['MODEL'] == 'CTL':    
+#         dTau1 = (10 ** dTau1) / utils.YEARSEC
+#         dTau2 = (10 ** dTau2) / utils.YEARSEC
+#     else:
+#         dTau1 = (10 ** dTau1) 
+#         dTau2 = (10 ** dTau2) 
 
     # Convert from Gyr to yr then set stop time, output time to age of system
-    dStopTime = dAge * 1.0e9
-    dOutputTime = kwargs.get('dOutputTime', dStopTime)
+    # dStopTime = dAge * 1.0e9
+    # dOutputTime = kwargs.get('dOutputTime', dStopTime)
 
     # Get the prior probability
     lnprior = kwargs["LnPrior"](x, **kwargs)
@@ -66,35 +66,6 @@ def LnLike(x, **kwargs):
         return -np.inf, np.nan, np.nan, np.nan, np.nan, np.nan, np.nan, np.nan, np.nan, np.nan, np.nan
 
     # Get constraints: if they don't exist, set them to None
-    # Assume we have radius constraints for both stars
-    r1 = kwargs.get("R1")
-    r1Sig = kwargs.get("R1SIG")
-    r2 = kwargs.get("R2")
-    r2Sig = kwargs.get("R2SIG")
-    try:
-        teff1 = kwargs.get("TEFF1")
-        teff1Sig = kwargs.get("TEFF1SIG")
-    except KeyError:
-        teff1 = None
-        teff1Sig = None
-    try:
-        teff2 = kwargs.get("TEFF2")
-        teff2Sig = kwargs.get("TEFF2SIG")
-    except KeyError:
-        teff2 = None
-        teff2Sig = None
-    try:
-        lum1 = kwargs.get("LUM1")
-        lum1Sig = kwargs.get("LUM1SIG")
-    except KeyError:
-        lum1 = None
-        lum1Sig = None
-    try:
-        lum2 = kwargs.get("LUM2")
-        lum2Sig = kwargs.get("LUM2SIG")
-    except KeyError:
-        lum2 = None
-        lum2Sig = None
     try:
         porb = kwargs.get("PORB")
         porbSig = kwargs.get("PORBSIG")
@@ -161,31 +132,31 @@ def LnLike(x, **kwargs):
     secondaryFwFile = '%s.secondary.forward' % sysName
 
     # Populate the primary input file (periods negative to make units days in VPLanet)
-    primary_in = re.sub("%s(.*?)#" % "dMass", "%s %.6e #" % ("dMass", dMass1), primary_in)
+    # primary_in = re.sub("%s(.*?)#" % "dMass", "%s %.6e #" % ("dMass", dMass1), primary_in)
     primary_in = re.sub("%s(.*?)#" % "dRotPeriod", "%s %.6e #" % ("dRotPeriod", -dProt1), primary_in)
-    if MODEL == "CPL":
-        primary_in = re.sub("%s(.*?)#" % "dTidalQ", "%s %.6e #" % ("dTidalQ", dTau1), primary_in)
-    elif MODEL == "CTL":
-        primary_in = re.sub("%s(.*?)#" % "dTidalTau", "%s %.6e #" % ("dTidalTau", dTau1), primary_in)
+#     if MODEL == "CPL":
+#         primary_in = re.sub("%s(.*?)#" % "dTidalQ", "%s %.6e #" % ("dTidalQ", dTau1), primary_in)
+#     elif MODEL == "CTL":
+#         primary_in = re.sub("%s(.*?)#" % "dTidalTau", "%s %.6e #" % ("dTidalTau", dTau1), primary_in)
 
     with open(os.path.join(OUTPATH, primaryFile), 'w') as f:
         print(primary_in, file = f)
 
     # Populate the secondary input file
-    secondary_in = re.sub("%s(.*?)#" % "dMass", "%s %.6e #" % ("dMass", dMass2), secondary_in)
+    # secondary_in = re.sub("%s(.*?)#" % "dMass", "%s %.6e #" % ("dMass", dMass2), secondary_in)
     secondary_in = re.sub("%s(.*?)#" % "dRotPeriod", "%s %.6e #" % ("dRotPeriod", -dProt2), secondary_in)
-    if MODEL == "CPL":
-        secondary_in = re.sub("%s(.*?)#" % "dTidalQ", "%s %.6e #" % ("dTidalQ", dTau2), secondary_in)
-    elif MODEL == "CTL":
-        secondary_in = re.sub("%s(.*?)#" % "dTidalTau", "%s %.6e #" % ("dTidalTau", dTau2), secondary_in)
+#     if MODEL == "CPL":
+#         secondary_in = re.sub("%s(.*?)#" % "dTidalQ", "%s %.6e #" % ("dTidalQ", dTau2), secondary_in)
+#     elif MODEL == "CTL":
+#         secondary_in = re.sub("%s(.*?)#" % "dTidalTau", "%s %.6e #" % ("dTidalTau", dTau2), secondary_in)
     secondary_in = re.sub("%s(.*?)#" % "dOrbPeriod", "%s %.6e #" % ("dOrbPeriod", -dPorb), secondary_in)
     secondary_in = re.sub("%s(.*?)#" % "dEcc", "%s %.6e #" % ("dEcc", dEcc), secondary_in)
     with open(os.path.join(OUTPATH, secondaryFile), 'w') as f:
         print(secondary_in, file = f)
 
     # Populate the system input file
-    vpl_in = re.sub('%s(.*?)#' % "dStopTime", '%s %.6e #' % ("dStopTime", dStopTime), vpl_in)
-    vpl_in = re.sub('%s(.*?)#' % "dOutputTime", '%s %.6e #' % ("dOutputTime", dOutputTime), vpl_in)
+    # vpl_in = re.sub('%s(.*?)#' % "dStopTime", '%s %.6e #' % ("dStopTime", dStopTime), vpl_in)
+    # vpl_in = re.sub('%s(.*?)#' % "dOutputTime", '%s %.6e #' % ("dOutputTime", dOutputTime), vpl_in)
     vpl_in = re.sub('sSystemName(.*?)#', 'sSystemName %s #' % sysName, vpl_in)
     vpl_in = re.sub('saBodyFiles(.*?)#', 'saBodyFiles %s %s #' % (primaryFile, secondaryFile), vpl_in)
     with open(os.path.join(OUTPATH, sysFile), 'w') as f:
@@ -208,16 +179,16 @@ def LnLike(x, **kwargs):
         return -np.inf, np.nan, np.nan, np.nan, np.nan, np.nan, np.nan, np.nan, np.nan, np.nan, np.nan
 
     # Ensure we ran for as long as we set out to
-    if not output.log.final.system.Age >= dStopTime:
-        return -np.inf, np.nan, np.nan, np.nan, np.nan, np.nan, np.nan, np.nan, np.nan, np.nan, np.nan
+    # if not output.log.final.system.Age >= dStopTime:
+    #     return -np.inf, np.nan, np.nan, np.nan, np.nan, np.nan, np.nan, np.nan, np.nan, np.nan, np.nan
 
     # Get output parameters
-    dRad1 = float(output.log.final.primary.Radius)
-    dRad2 = float(output.log.final.secondary.Radius)
-    dTeff1 = float(output.log.final.primary.Temperature)
-    dTeff2 = float(output.log.final.secondary.Temperature)
-    dLum1 = float(output.log.final.secondary.Luminosity)
-    dLum2 = float(output.log.final.secondary.Luminosity)
+    # dRad1 = float(output.log.final.primary.Radius)
+    # dRad2 = float(output.log.final.secondary.Radius)
+    # dTeff1 = float(output.log.final.primary.Temperature)
+    # dTeff2 = float(output.log.final.secondary.Temperature)
+    # dLum1 = float(output.log.final.secondary.Luminosity)
+    # dLum2 = float(output.log.final.secondary.Luminosity)
     dPorb = float(output.log.final.secondary.OrbPeriod)
     dEcc = float(output.log.final.secondary.Eccentricity)
     dProt1 = float(output.log.final.primary.RotPer)
@@ -226,29 +197,17 @@ def LnLike(x, **kwargs):
     # Compute the likelihood using provided constraints, assuming we have
     # radius constraints for both stars
     
-    lnlike = ((dRad1 - r1) / r1Sig) ** 2
-    lnlike += ((dRad2 - r2) / r2Sig) ** 2
-    if teff1 is not None:
-        lnlike += ((dTeff1 - teff1) / teff1Sig) ** 2
-    if teff2 is not None:
-        lnlike += ((dTeff2 - teff2) / teff2Sig) ** 2
-    if lum1 is not None:
-        lnlike += ((dLum1 - lum1) / lum1Sig) ** 2
-    if lum2 is not None:
-        lnlike += ((dLum2 - lum2) / lum2Sig) ** 2
-    if porb is not None:
-        lnlike += ((dPorb - porb) / porbSig) ** 2
-    if ecc is not None:
-        lnlike += ((dEcc - ecc) / eccSig) ** 2
+
+    lnlike = ((dPorb - porb) / porbSig) ** 2
+    lnlike += ((dEcc - ecc) / eccSig) ** 2
     if prot1 is not None:
         lnlike += ((dProt1 - prot1) / prot1Sig) ** 2
     if prot2 is not None:
         lnlike += ((dProt2 - prot2) / prot2Sig) ** 2
-    # lnlike = -0.5 * lnlike + lnprior
     lnlike = -0.5 * lnlike 
 
     # Return likelihood and blobs
-    return lnlike, dProt1, dProt2, dPorb, dEcc, dRad1, dRad2, dLum1, dLum2, dTeff1, dTeff2
+    return lnlike, dProt1, dProt2, dPorb, dEcc
 # end function
 
 
