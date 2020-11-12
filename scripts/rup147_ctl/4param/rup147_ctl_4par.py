@@ -8,8 +8,7 @@ import os
 import tqdm
 from multiprocessing import Pool
 import config 
-from kicq import priors
-from kicq import mcmcUtils as kicmc
+from kicq import mcmcUtilsOrbitFixTau as kicmc
 from approxposterior import approx
 import emcee, corner
 import numpy as np
@@ -23,9 +22,9 @@ import time
 # approxposterior settings
 # ===============================================
 
-ndim = 9                          # Dimensionality of the problem
-m0 = 2000                         # Initial size of training set
-m = 200                           # Number of new points to find each iteration
+ndim = 4                          # Dimensionality of the problem
+m0 = 400                         # Initial size of training set
+m = 100                           # Number of new points to find each iteration
 nmax = 20                         # Maximum number of iterations
 kmax = 5                          # Number of consecutive iterations for convergence check to pass before successfully ending algorithm
 nGPRestarts = 1                   # Number of times to restart GP hyperparameter optimization
@@ -58,13 +57,13 @@ kwargs["PATH"] = PATH
 # Load vplanet input files, save them as strings
 # ===============================================
 
-with open(os.path.join(PATH, "primary.in"), 'r') as f:
+with open(os.path.join(PATH, "infile/primary.in"), 'r') as f:
     primary_in = f.read()
     kwargs["PRIMARYIN"] = primary_in
-with open(os.path.join(PATH, "secondary.in"), 'r') as f:
+with open(os.path.join(PATH, "infile/secondary.in"), 'r') as f:
     secondary_in = f.read()
     kwargs["SECONDARYIN"] = secondary_in
-with open(os.path.join(PATH, "vpl.in"), 'r') as f:
+with open(os.path.join(PATH, "infile/vpl.in"), 'r') as f:
     vpl_in = f.read()
     kwargs["VPLIN"] = vpl_in
 
@@ -73,7 +72,7 @@ with open(os.path.join(PATH, "vpl.in"), 'r') as f:
 # Generate initial GP training samples
 # ===============================================
 
-trainSimCache = "apRunAPFModelCache1.npz"
+trainSimCache = os.path.join(PATH, "results/apRunAPFModelCache.npz")
 
 if not os.path.exists(trainSimCache):
     y = np.zeros(m0)
@@ -100,46 +99,47 @@ else:
 print(theta.shape)
 
 
-# # ===============================================
-# # Initialize GP
-# # ===============================================
+# ===============================================
+# Initialize GP
+# ===============================================
 
-# # Use ExpSquared kernel, the approxposterior default option
-# gp = approx.gpUtils.defaultGP(theta, y, white_noise=-15, fitAmp=False)
-
-
-# # ===============================================
-# # Run approxposterior
-# # ===============================================
-
-# # Initialize object using the Wang & Li (2017) Rosenbrock function example
-# ap = approx.ApproxPosterior(theta=theta,
-#                             y=y,
-#                             gp=gp,
-#                             lnprior=kwargs["LnPrior"],
-#                             lnlike=kicmc.LnLike,
-#                             priorSample=kwargs["PriorSample"],
-#                             algorithm=algorithm,
-#                             bounds=bounds)
-
-# ap.run(m=m, nmax=nmax, kmax=kmax, mcmcKwargs=mcmcKwargs, samplerKwargs=samplerKwargs, 
-#        nGPRestarts=nGPRestarts, nMinObjRestarts=nMinObjRestarts, optGPEveryN=optGPEveryN, eps=0.1,
-#        thinChains=True, estBurnin=True, verbose=True, cache=True, convergenceCheck=True, **kwargs)
+# Use ExpSquared kernel, the approxposterior default option
+gp = approx.gpUtils.defaultGP(theta, y, white_noise=-15, fitAmp=False)
 
 
-# # ===============================================
-# # Plot posterior
-# # ===============================================
+# ===============================================
+# Run approxposterior
+# ===============================================
 
-# # Load in chain from last iteration
-# reader = emcee.backends.HDFBackend(ap.backends[-1], read_only=True)
-# samples = reader.get_chain(discard=ap.iburns[-1], flat=True, thin=ap.ithins[-1])
+# Initialize object using the Wang & Li (2017) Rosenbrock function example
+ap = approx.ApproxPosterior(theta=theta,
+                            y=y,
+                            gp=gp,
+                            lnprior=kwargs["LnPrior"],
+                            lnlike=kicmc.LnLike,
+                            priorSample=kwargs["PriorSample"],
+                            algorithm=algorithm,
+                            bounds=bounds)
 
-# # Corner plot!
-# fig = corner.corner(samples, quantiles=[0.16, 0.5, 0.84], show_titles=True,
-#                     labels=[r'$M_1$', r'$M_2$', r'$Prot_1$', r'$Prot_2$', r'$\tau_1$', r'$\tau_2$', r'$P_{orb}$', r'$e$', r'$age$'],
-#                     scale_hist=True, plot_contours=True)
+ap.run(m=m, nmax=nmax, kmax=kmax, mcmcKwargs=mcmcKwargs, samplerKwargs=samplerKwargs, runName="results/apRun",
+       nGPRestarts=nGPRestarts, nMinObjRestarts=nMinObjRestarts, optGPEveryN=optGPEveryN, eps=0.1,
+       thinChains=True, estBurnin=True, verbose=True, cache=True, convergenceCheck=True, timing=True, **kwargs)
 
-# fig.savefig("apFinalPosterior.png", bbox_inches="tight") # Uncomment to save
 
-# np.save('ap_final_samples.npy', samples)
+# ===============================================
+# Plot posterior
+# ===============================================
+
+# Load in chain from last iteration
+reader = emcee.backends.HDFBackend(ap.backends[-1], read_only=True)
+samples = reader.get_chain(discard=ap.iburns[-1], flat=True, thin=ap.ithins[-1])
+
+# Corner plot!
+labels = [r'$P_{\rm rot1}$', r'$P_{\rm rot2}$', r'$P_{\rm orb}$', r'$e$']
+fig = corner.corner(samples, quantiles=[0.16, 0.5, 0.84], show_titles=True,
+                    labels=labels, title_kwargs={"fontsize": 18}, label_kwargs={"fontsize": 22},
+                    scale_hist=True, plot_contours=True)
+
+fig.savefig("plots/apFinalPosterior.png", bbox_inches="tight") # Uncomment to save
+
+np.save('results/ap_final_samples.npy', samples)
