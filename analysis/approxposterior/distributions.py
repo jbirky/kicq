@@ -19,13 +19,20 @@ import glob
 # Plot setup
 # =============================================
 
-INPATH  = '../../Scripts/Rup147_CTL/results'
-plotDir = '../../Scripts/Rup147_CTL/plots'
+BASE = '../../scripts/rup147_ctl/4param/'
+INPATH  = BASE + 'results/'
+plotDir = BASE + 'plots/'
 if not os.path.exists(plotDir):
     os.mkdir(plotDir)
 
-labels = [r"$M_1$", r"$M_2$", r'$P_{\rm rot1}$', r'$P_{\rm rot2}$', r'$\tau_1$', r'$\tau_2$', r'$P_{\rm orb}$', r'$e$', r'$\rm age$']
-m0 = 1000
+# labels = [r"$M_1$", r"$M_2$", r'$P_{\rm rot1}$', r'$P_{\rm rot2}$', r'$\tau_1$', r'$\tau_2$', r'$P_{\rm orb}$', r'$e$', r'$\rm age$']
+# m0 = 1000
+
+# labels = [r'$P_{\rm rot1}$', r'$P_{\rm rot2}$', r'$\tau_1$', r'$\tau_2$', r'$P_{\rm orb}$', r'$e$']
+# m0 = 600
+
+labels = [r'$P_{\rm rot1}$', r'$P_{\rm rot2}$', r'$P_{\rm orb}$', r'$e$']
+m0 = 400
 
 # =============================================
 # MCMC corner plot
@@ -52,11 +59,11 @@ def plotPosterior(file, **kwargs):
 # ----------------------------
 
 # get hdf5 file of last MCMC iteration
-hdFiles = glob.glob(os.path.join(INPATH, 'apRun*.h5'))
-lastF = max([f.split('apRun')[1].split('.h5')[0] for f in hdFiles])
+# hdFiles = glob.glob(os.path.join(INPATH, 'apRun*.h5'))
+# lastF = max([f.split('apRun')[1].split('.h5')[0] for f in hdFiles])
 
-chain, fig = plotPosterior(os.path.join(INPATH, 'apRun%s.h5'%(lastF)), burn=int(1e3), thin=100)
-fig.savefig(os.path.join(plotDir, 'emcee_corner.png'))
+# chain, fig = plotPosterior(os.path.join(INPATH, 'apRun%s.h5'%(lastF)), burn=int(1e3), thin=100)
+# fig.savefig(os.path.join(plotDir, 'emcee_corner.png'))
 
 
 # =============================================

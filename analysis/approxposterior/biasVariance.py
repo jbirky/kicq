@@ -29,24 +29,26 @@ from matplotlib.ticker import AutoMinorLocator
 # Plot setup
 # ============================================
 
-INPATH  = '../../Scripts/Rup147_CTL/results'
-plotDir = '../../Scripts/Rup147_CTL/plots'
+BASE = '../../scripts/rup147_ctl/4param/'
+INPATH  = BASE + 'results/'
+plotDir = BASE + 'plots/'
 if not os.path.exists(plotDir):
     os.mkdir(plotDir)
     
 fitAmp = False
-nErrSamples = 1
-nTrain = 2000
-nSamp  = 3000
+nErrSamples = 10
+nTrain = 300
+nSamp  = 400
 testScales = np.arange(-11,16,.5)
 computeSamples = True
 
-simsFile = INPATH + '/apRunAPFModelCache.npz' #'simsCache.npz'
-gpFile   = INPATH + '/apRunAPGP.npz'
-mseFile  = INPATH + '/mse_samples.npz'
+simsFile = INPATH + 'apRunAPFModelCache.npz' #'simsCache.npz'
+gpFile   = INPATH + 'apRunAPGP.npz'
+mseFile  = INPATH + 'mse_samples.npz'
 
 # load optimized GP parameters, last iteration
 gpSaved = np.load(gpFile)['gpParamValues'][-1]
+white_noise = -15
 
 
 # ============================================
@@ -54,10 +56,10 @@ gpSaved = np.load(gpFile)['gpParamValues'][-1]
 # ============================================
 
 
-def loadSamples(nTrain=500, **kwargs):
+def loadSamples(nTrain=nTrain, simsFile=simsFile):
 
-	sims = np.load(kwargs.get('simsFile'))
-	nSamp = len(sims['y'])
+	sims = np.load(simsFile)
+	print(len(sims['y']), 'total samples')
 
 	train_ind = np.random.choice(nSamp, nTrain, replace=False)
 	test_ind  = np.array(list(set(np.arange(nSamp)) - set(train_ind)))
@@ -88,7 +90,7 @@ if computeSamples == True:
 
 		tTrain, yTrain, tTest, yTest = loadSamples(nTrain=nTrain, simsFile=simsFile)
 
-		gp = gpUtils.defaultGP(tTrain, yTrain, white_noise=-12, fitAmp=fitAmp)
+		gp = gpUtils.defaultGP(tTrain, yTrain, white_noise=white_noise, fitAmp=fitAmp)
 		gp.compute(tTrain)
 
 		gpPar = np.zeros(gp.get_parameter_vector().shape[0])
@@ -143,7 +145,7 @@ if computeSamples == True:
 
 tTrain, yTrain, tTest, yTest = loadSamples(nTrain=nTrain, simsFile=simsFile)
 
-gp = gpUtils.defaultGP(tTrain, yTrain, white_noise=-12, fitAmp=fitAmp)
+gp = gpUtils.defaultGP(tTrain, yTrain, white_noise=white_noise, fitAmp=fitAmp)
 gp.compute(tTrain)
 
 gp.set_parameter_vector(gpSaved)
